@@ -3,7 +3,7 @@ import pyparsing as pp
 
 # Entry class responsible for replacing all mentions of the technology for #0#/#1# 
 class TechRemover:    
-    def __init__(self, code, technology, alwaysTrue, log):
+    def __init__(self, code, technology, alwaysTrue, file, log):
         self.code = code
         self.tech = technology
         self.log = log
@@ -11,6 +11,7 @@ class TechRemover:
         self.anyChange = False
         self.simplifier = ExpressionSimplifier()
         self.rep = re.compile(r"^(?P<start>[ \t]*#[ \t]*(?:el)?if(?:n)?(?:def)?[ \t]+)(?P<inside>[^/\n]+)(?P<end>[ \t]*(?://.*)?\n)$")
+        self.file = file
         
         #defined and not defined
         self.rgx_notdefined = re.compile('![ \t]*defined[ \t]+'+self.tech+'[ \t]')
@@ -49,10 +50,16 @@ class TechRemover:
             if(changed!=insides):
                 self.anyChange = True
                 if(not self.log is None): self.log.write('\t Tech replaced:%s' % start + changed + end)
-                changed = self.simplifier.process(changed)
-                if(self.simplifier.anyChange and not self.log is None): self.log.write('\t Simplifed to:%s' % start + changed + end)
-                self.simplifier.reset()
-                self.code[lnumber] = start + changed + end
+                try:
+                    changed = self.simplifier.process(changed)
+                    if(self.simplifier.anyChange and not self.log is None): self.log.write('\t Simplifed to:%s' % start + changed + end)
+                    self.simplifier.reset()
+                    self.code[lnumber] = start + changed + end
+                except Exception as inst:
+                    print('!!!There was an error simplifying line %d in %s:\n\tOriginal:%s\n\tChanged:%s\n\tException:%s\nPlease manualy edit it.' % (lnumber, self.file, cline, changed, inst))
+                    if(not self.log is None): self.log.write('There was an error simplifying line %d in %s:\n\tOriginal:%s\n\tChanged:%s\n\tException:%s' % (lnumber, self.file, cline, changed, inst))
+                    self.simplifier.reset()
+
     
     def process(self):
         for lnumber,cline in enumerate(self.code):

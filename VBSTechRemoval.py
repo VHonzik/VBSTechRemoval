@@ -57,7 +57,7 @@ def process_file(pathandfile,technologyName,alwaysTrue,log):
     with open(pathandfile, 'r') as f:
         code = f.readlines()
         # use core tech remover class
-        remover = VBSTechRemovalCore.TechRemover(code, technologyName, alwaysTrue, log)
+        remover = VBSTechRemovalCore.TechRemover(code, technologyName, alwaysTrue, pathandfile, log)
         remover.process()
         if(remover.anyChange):
             if(not log is None): log.write('Writting changes to the file.')
